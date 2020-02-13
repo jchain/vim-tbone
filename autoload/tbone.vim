@@ -310,6 +310,7 @@ function! tbone#pane_id(target) abort
   return matchstr(output, '%\d\+\ze '.offset.'\>')
 endfunction
 
+" (jzc) I changed this func.
 function! tbone#write_command(bang, line1, line2, count, target) abort
   let target = empty(a:target) ? get(g:, 'tbone_write_pane', '') : a:target
   if empty(target)
@@ -328,7 +329,8 @@ function! tbone#write_command(bang, line1, line2, count, target) abort
     let keys = join(filter(l, "v:val !~ '^\\s*//'"), "\r")
   endif
 
-  " This is the original code that deletes the leading spaces of every line.
+  "" This is the original code that deletes the leading spaces of every line. This is bad since the
+  "" spaces is significant in languages like python, ocaml/f#.
   " let keys = join(filter(map(
   "   \ getline(a:line1, a:line2),
   "   \ 'substitute(v:val,"^\\s*","","")'),
@@ -353,6 +355,36 @@ function! tbone#write_command(bang, line1, line2, count, target) abort
     let pane_id = tbone#send_keys(target, keys)
     let g:tbone_write_pane = pane_id
     " echo len(keys).' keys sent to '.pane_id
+    return ''
+  catch /.*/
+    return 'echoerr '.string(v:exception)
+  endtry
+endfunction
+
+" (jzc) I want to make a new write command that removes comment symbol before sending to tmux
+function! tbone#write_command1(bang, line1, line2, count, ...) abort
+  let target = a:0 ? a:1 : get(g:, 'tbone_write_pane', '')
+  if empty(target)
+    return 'echoerr '.string('Target pane required')
+  endif
+
+  let keys = join(map(
+        \ getline(a:line1, a:line2),
+        \ 'substitute(v:val,"^\\s*//","","")'),
+        \ "\r")
+
+  if &ft == 'fsharp' || &ft == 'ocaml'
+    let keys = keys.";;"
+  endif
+
+  if a:count > 0
+    let keys = get(g:, 'tbone_write_initialization', '').keys."\r"
+  endif
+
+  try
+    let pane_id = tbone#send_keys(target, keys)
+    let g:tbone_write_pane = pane_id
+    echo len(keys).' keys sent to '.pane_id
     return ''
   catch /.*/
     return 'echoerr '.string(v:exception)

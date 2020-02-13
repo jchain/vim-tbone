@@ -23,6 +23,8 @@ command! -bar -bang -nargs=? -complete=custom,tbone#complete_buffers -range Tyan
       \ execute tbone#buffer_command('Tyank', <q-args>, 'silent <line1>,<line2>write', 'load-buffer', '')
 command! -bar -bang -nargs=? -range -complete=custom,tbone#complete_panes Twrite
       \ execute tbone#write_command(<bang>0, <line1>, <line2>, <count>, <q-args>)
+command! -bar -bang -nargs=? -range -complete=custom,tbone#complete_panes Twrite1
+      \ execute tbone#write_command1(<bang>0, <line1>, <line2>, <count>, <q-args>)
 
 augroup tbone_reign_supreme_over_tmux_command
   autocmd!
